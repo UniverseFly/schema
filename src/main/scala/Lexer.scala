@@ -1,6 +1,7 @@
 import scala.util.parsing.combinator._
+import scala.util.parsing.input.Positional
 
-enum Token:
+enum Token extends Positional:
   case ID(name: scala.Predef.String)
   case Bool(isTrue: Boolean)
   case Num(value: BigDecimal)
@@ -23,12 +24,14 @@ object Lexer extends JavaTokenParsers:
       | "'" ^^ (_ => Token.Apostrophe)
       | "`" ^^ (_ => Token.BackQuote)
       | "," ^^ (_ => Token.Comma)
-      | "." ^^ (_ => Token.Dot)
+      | withDelimiterAfter { "." ^^ (_ => Token.Dot) }
       | "(#" ^^ (_ => Token.HashLParen)
       | ",@" ^^ (_ => Token.CommaAtSign)
 
-  /// Returning `Unit` means we don't care what they return
-  def delimiter: Parser[Unit] = """[ \(\)";]""".r ^^^ ()
+  /// Returning `Unit`` means we don't care what they return
+  def delimiter: Parser[Unit] = """[ \(\)";]|\Z""".r ^^^ ()
+  def withDelimiterAfter[T](parser: Parser[T]) = parser <~ not(not(delimiter))
+
   def whitespace: Parser[Unit] = """[ \n]""".r ^^^ ()
   // Without the \n in the regex, comment would not take effect
   // consider an example stream `;3`
@@ -37,13 +40,15 @@ object Lexer extends JavaTokenParsers:
   def intertokenSpace: Parser[Unit] = this.rep(atmosphere) ^^^ ()
 
   def identifier: Parser[Token] =
-    (initial ~ this.rep(subsequent)) ^^ { case initial ~ subsequents =>
-      Token.ID(initial + subsequents.mkString)
+    withDelimiterAfter {
+      (initial ~ this.rep(subsequent)) ^^ { case initial ~ subsequents =>
+        Token.ID(initial + subsequents.mkString)
+      }
+        | peculiarIdentifier ^^ { id => Token.ID(id) }
     }
-      | peculiarIdentifier ^^ { id => Token.ID(id) }
 
   def initial: Parser[String] = letter | specialInitial
-  def letter: Parser[String] = "[a-z]".r
+  def letter: Parser[String] = "[a-zA-Z]".r
   def specialInitial: Parser[String] = "[!$%&*/:<=>?^_~]".r
 
   def subsequent: Parser[String] = initial | digit | specialSubsequent
@@ -63,9 +68,10 @@ object Lexer extends JavaTokenParsers:
     "#t" ^^ (_ => Token.Bool(true))
       | "#f" ^^ (_ => Token.Bool(false))
 
-  def character: Parser[Token] =
+  def character: Parser[Token] = withDelimiterAfter {
     """#\""" ~> characterName ^^ (c => Token.Char(c))
       | """#\\.""".r ^^ (s => Token.Char(s.charAt(2)))
+  }
 
   def characterName: Parser[Char] =
     "space" ^^ (_ => ' ')
@@ -77,7 +83,9 @@ object Lexer extends JavaTokenParsers:
 
   def stringElement: Parser[String] = """[^"\\]|(\\")|(\\\\f)""".r
 
-  def number = this.decimalNumber ^^ (d => Token.Num(BigDecimal(d)))
+  def number = withDelimiterAfter {
+    """[+-]?(\d+(\.\d*)?|\d*\.\d+)""".r ^^ (d => Token.Num(BigDecimal(d)))
+  }
 
   def tokens: Parser[List[Token]] =
     this.rep1(intertokenSpace ~> token) <~ intertokenSpace
