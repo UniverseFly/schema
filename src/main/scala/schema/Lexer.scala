@@ -1,3 +1,5 @@
+package schema
+
 import scala.util.parsing.combinator._
 import scala.util.parsing.input.Positional
 
@@ -11,7 +13,7 @@ enum Token extends Positional:
   case HashLParen /* #( */
   case CommaAtSign /* ,@ */
 
-object SchemeLexer extends JavaTokenParsers:
+object Lexer extends JavaTokenParsers:
   // Don't skip whitespace by default, otherwise each SUBPARSER will skip
   // whitespaces before they're run. These subparsers are just components
   // of main parsers which we really care and which need skipping whitespaces.

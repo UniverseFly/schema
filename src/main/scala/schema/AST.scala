@@ -1,11 +1,14 @@
+package schema
+
 import scala.util.parsing.input.Positional
 
-type Scheme = List[
+type Program = List[
   Expr | Def
 ]
 
-enum Def:
+enum Def {
   case VarDef(variable: Token.ID, value: Expr)
+}
 
 enum Literal:
   case Bool(isTrue: Boolean)
@@ -16,7 +19,7 @@ enum Literal:
 enum Expr extends Positional {
   case Var(name: String)
   case Lit(value: Literal)
-  case Quote(expression: Expr)
+  // case Quote(expression: Expr)
   case ProcedureCall(operator: Expr, operands: List[Expr])
   case LambdaExpr(
       formals: List[Expr.Var],
@@ -25,5 +28,4 @@ enum Expr extends Positional {
   )
   case Conditional(test: Expr, consequent: Expr, alternate: Option[Expr])
   case Assignment(variable: String, value: Expr)
-  case ProcudureCall(operator: Expr, operand: List[Expr])
 }

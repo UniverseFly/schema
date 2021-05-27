@@ -1,7 +1,9 @@
+package schema
+
 import scala.util.parsing.combinator._
 import scala.util.parsing.input.{Reader, Position, NoPosition}
 
-object SchemeParser extends Parsers {
+object Parser extends Parsers {
   override type Elem = Token
 
   class TokenReader(tokens: List[Token]) extends Reader[Token] {
@@ -11,9 +13,8 @@ object SchemeParser extends Parsers {
     override def rest = TokenReader(tokens.tail)
   }
 
-  def program: Parser[Expr] = positioned {
-    phrase(expression)
-  }
+  // def program: Parser[SchemeProgram] = phrase(expression) ^^ { case expression => List(expression) }
+  def program = phrase(expression)
 
   def expression = positioned {
     variable | literal | procedureCall | lambdaExpression
@@ -22,7 +23,7 @@ object SchemeParser extends Parsers {
   def literal = positioned {
     selfEvaluating
   }
-
+  
   def selfEvaluating: Parser[Expr] = positioned {
     boolean | number | character | string
   }
@@ -97,7 +98,7 @@ object SchemeParser extends Parsers {
   }
 
   def apply(code: String): Expr =
-    val tokens = SchemeLexer(code)
+    val tokens = Lexer(code)
     val AST = apply(tokens)
     AST
 }
