@@ -71,3 +71,4 @@ flycheck_*.el
 .metals/
 .bloop/
 project/metals.sbt
+.bsp
