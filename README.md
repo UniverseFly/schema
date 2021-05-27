@@ -3,8 +3,8 @@
 The current status of this project is work in progress:
 
 - [x] Lexer
-- [ ] Parser
-- [ ] AST
+- [x] Parser
+- [ ] **WIP**: AST
 - [ ] Environment
 - [ ] Evaluator
 
