@@ -2,30 +2,31 @@ package schema
 
 import scala.util.parsing.input.Positional
 
-type Program = List[
-  Expr | Def
-]
-
-enum Def {
-  case VarDef(variable: Token.ID, value: Expr)
-}
-
-enum Literal:
+enum Constant {
   case Bool(isTrue: Boolean)
   case Num(value: BigDecimal)
   case Char(value: scala.Char)
   case String(value: scala.Predef.String)
-
-enum Expr extends Positional {
-  case Var(name: String)
-  case Lit(value: Literal)
-  // case Quote(expression: Expr)
-  case ProcedureCall(operator: Expr, operands: List[Expr])
-  case LambdaExpr(
-      formals: List[Expr.Var],
-      definitions: List[Def],
-      expressions: List[Expr]
-  )
-  case Conditional(test: Expr, consequent: Expr, alternate: Option[Expr])
-  case Assignment(variable: String, value: Expr)
 }
+
+type Identifier = String
+
+enum Expression extends Positional {
+  case Const(value: Constant)
+  case Var(id: Identifier)
+  case ProcedureCall(operator: Expression, operands: List[Expression])
+  case LambdaExpr(
+      formals: List[Identifier],
+      commands: List[Command],
+      returnValue: Expression
+  )
+  case Conditional(
+      test: Expression,
+      consequent: Expression,
+      alternate: Expression
+  )
+  case Conditional_NoAlt(test: Expression, consequent: Expression)
+  case Assignment(id: Identifier, value: Expression)
+}
+
+type Command = Expression

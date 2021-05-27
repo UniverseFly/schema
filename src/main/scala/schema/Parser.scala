@@ -17,34 +17,34 @@ object Parser extends Parsers {
   def program = phrase(expression)
 
   def expression = positioned {
-    variable | literal | procedureCall | lambdaExpression
+    variable ^^ { Expression.Var(_) } | literal | procedureCall | lambdaExpression
   }
 
   def literal = positioned {
     selfEvaluating
   }
-  
-  def selfEvaluating: Parser[Expr] = positioned {
+
+  def selfEvaluating = positioned {
     boolean | number | character | string
   }
 
   def procedureCall = positioned {
-    Token.LParen ~> operator ~ this.rep(operand) <~ Token.RParen ^^ {
-      case operator ~ operands => Expr.ProcedureCall(operator, operands)
+    Token.LParen ~> operator ~ operand.* <~ Token.RParen ^^ {
+      case operator ~ operands => Expression.ProcedureCall(operator, operands)
     }
   }
 
-  def operator: Parser[Expr] = positioned {
+  def operator: Parser[Expression] = positioned {
     expression
   }
 
-  def operand: Parser[Expr] = positioned {
+  def operand: Parser[Expression] = positioned {
     expression
   }
 
   def lambdaExpression = positioned {
     Token.LParen ~> formals ~ body ^^ { case formals ~ body =>
-      Expr.LambdaExpr(formals, Nil, body)
+      Expression.LambdaExpr(formals, body.init, body.last)
     }
   }
 
@@ -56,40 +56,48 @@ object Parser extends Parsers {
 
   def body = sequence
 
-  def sequence: Parser[List[Expr]] = command.* ~ expression ^^ {
+  def sequence: Parser[List[Expression]] = command.* ~ expression ^^ {
     case commands ~ expression => commands :+ expression
   }
 
-  def command: Parser[Expr] = positioned {
+  def command: Parser[Expression] = positioned {
     expression
   }
 
-  def variable: Parser[Expr.Var] = positioned {
-    accept("Variable", { case Token.ID(name) => Expr.Var(name) })
-  }
+  def variable: Parser[schema.Identifier] =
+    accept("Variable", { case Token.ID(name) => name })
 
   def lambda: Parser[Unit] = accept(
     "The 'lambda' keyword",
     { case Token.ID(name) if name == "lambda" => () }
   )
 
-  def boolean: Parser[Expr] = positioned {
-    accept("Boolean", { case Token.Bool(v) => Expr.Lit(Literal.Bool(v)) })
+  def boolean: Parser[Expression] = positioned {
+    accept(
+      "Boolean",
+      { case Token.Bool(v) => Expression.Const(Constant.Bool(v)) }
+    )
   }
 
-  def number: Parser[Expr] = positioned {
-    accept("Number", { case Token.Num(v) => Expr.Lit(Literal.Num(v)) })
+  def number: Parser[Expression] = positioned {
+    accept("Number", { case Token.Num(v) => Expression.Const(Constant.Num(v)) })
   }
 
-  def character: Parser[Expr] = positioned {
-    accept("Character", { case Token.Char(c) => Expr.Lit(Literal.Char(c)) })
+  def character: Parser[Expression] = positioned {
+    accept(
+      "Character",
+      { case Token.Char(c) => Expression.Const(Constant.Char(c)) }
+    )
   }
 
-  def string: Parser[Expr] = positioned {
-    accept("String", { case Token.String(s) => Expr.Lit(Literal.String(s)) })
+  def string: Parser[Expression] = positioned {
+    accept(
+      "String",
+      { case Token.String(s) => Expression.Const(Constant.String(s)) }
+    )
   }
 
-  def apply(tokens: List[Token]): Expr = {
+  def apply(tokens: List[Token]): Expression = {
     val reader = TokenReader(tokens)
     program(reader) match {
       case Success(result, _) => result
@@ -97,7 +105,7 @@ object Parser extends Parsers {
     }
   }
 
-  def apply(code: String): Expr =
+  def apply(code: String): Expression =
     val tokens = Lexer(code)
     val AST = apply(tokens)
     AST
