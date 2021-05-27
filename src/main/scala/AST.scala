@@ -1,3 +1,5 @@
+import scala.util.parsing.input.Positional
+
 type Scheme = List[
   Expr | Def
 ]
@@ -11,7 +13,7 @@ enum Literal:
   case Char(value: scala.Char)
   case String(value: scala.Predef.String)
 
-enum Expr {
+enum Expr extends Positional {
   case Var(name: String)
   case Lit(value: Literal)
   case Quote(expression: Expr)
