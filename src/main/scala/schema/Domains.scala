@@ -2,6 +2,7 @@ package schema
 
 import scala.util.parsing.input.Positional
 import schema.semantics.ExpressedValue
+import schema.semantics.MutableEnvironment
 
 /// Syntactic Domain
 package syntax {
@@ -30,6 +31,8 @@ package syntax {
     )
     case Conditional_NoAlt(test: Expression, consequent: Expression)
     case Assignment(id: Identifier, value: Expression)
+    // A simplified definition AST
+    case Definition(id: Identifier, value: Expression)
   }
 
   type Command = Expression
@@ -58,10 +61,14 @@ package semantics {
   // Programming Languages, page 277
   // 
   // We can also define Env as a class, which stores mappings of (ID, Value)
+  //
+  // But in this project `Environment` would not be used directly; instead a mutable version
+  // called `MutableEnvironment` wraps this immutable one and provides ways to modify itself.
+  // Using mutable version is because REPL changes environment by nature, e.g. `(define ...)`
   type Environment = (syntax.Identifier) => Option[Nameable]
 
   object Environment {
-    val emptyEnvironment: Environment = (id) => None
+    val emptyEnvironment: Environment = id => None
   }
 
   extension (env: Environment) {
@@ -74,5 +81,21 @@ package semantics {
         case b => id => if b.contains(id) then Some(b(id)) else env(id)
       }
     }
+  }
+
+  /// A wrapper of `Environment` which is mutable, to support things like `define` in REPL
+  class MutableEnvironment(private var env: Environment) {
+    // still immutable methods
+    val lookup = env.lookup
+    val extend = (b: Map[syntax.Identifier, Nameable]) => MutableEnvironment(env.extend(b))
+
+    // A mutable method
+    def addEntry(id: syntax.Identifier, value: Nameable) = {
+      env = ID => if ID == id then Some(value) else env(id)
+    }
+  }
+
+  object MutableEnvironment {
+    val emptyEnvironment = MutableEnvironment(id => None)
   }
 }
