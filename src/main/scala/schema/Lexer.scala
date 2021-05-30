@@ -3,8 +3,13 @@ package schema
 import scala.util.parsing.combinator._
 import scala.util.parsing.input.Positional
 
-enum Token extends Positional:
-  case ID(name: scala.Predef.String)
+enum TokenID {
+  case Keyword(name: String)
+  case Var(id: String)
+}
+
+enum Token extends Positional {
+  case ID(kind: TokenID)
   case Bool(isTrue: Boolean)
   case Num(value: BigDecimal)
   case Char(c: scala.Char)
@@ -12,15 +17,16 @@ enum Token extends Positional:
   case LParen, RParen, Apostrophe, BackQuote, Comma, Dot
   case HashLParen /* #( */
   case CommaAtSign /* ,@ */
+}
 
-object Lexer extends JavaTokenParsers:
+object Lexer extends JavaTokenParsers {
   // Don't skip whitespace by default, otherwise each SUBPARSER will skip
   // whitespaces before they're run. These subparsers are just components
   // of main parsers which we really care and which need skipping whitespaces.
   override def skipWhitespace = false
 
   def token: Parser[Token] = positioned {
-    identifier | boolean | number | character | string
+    identifier | syntacticKeyword | boolean | number | character | string
       | "(" ^^ (_ => Token.LParen)
       | ")" ^^ (_ => Token.RParen)
       | "'" ^^ (_ => Token.Apostrophe)
@@ -42,14 +48,7 @@ object Lexer extends JavaTokenParsers:
   def atmosphere: Parser[Unit] = (whiteSpace | comment) ^^^ ()
   def intertokenSpace: Parser[Unit] = this.rep(atmosphere) ^^^ ()
 
-  def identifier: Parser[Token] = positioned {
-    withDelimiterAfter {
-      (initial ~ this.rep(subsequent)) ^^ { case initial ~ subsequents =>
-        Token.ID(initial + subsequents.mkString)
-      }
-        | peculiarIdentifier ^^ { id => Token.ID(id) }
-    }
-  }
+  def identifier: Parser[Token] = variable | syntacticKeyword
 
   def initial: Parser[String] = letter | specialInitial
   def letter: Parser[String] = "[a-zA-Z]".r
@@ -62,11 +61,21 @@ object Lexer extends JavaTokenParsers:
   // escape the dot!
   def peculiarIdentifier: Parser[String] = """[+-]|(\.\.\.)""".r
 
-  def syntacticKeyword: Parser[Unit] =
-    expressionKeyword | "(else)|(=>)|(define)|(unquote)|(unquote-splicing)".r ^^^ ()
-  def expressionKeyword: Parser[Unit] =
-    "(quote)|(lambda)|(if)|(set!)|(begin)|(cond)|(and)|(or)|(case)|(let)|(let*)|(letrec)|(do)|(delay)|(quasiquote)".r ^^^ ()
-  def variable: Parser[Unit] = this.not(syntacticKeyword) ~> identifier ^^^ ()
+  def syntacticKeyword: Parser[Token] =
+    (expressionKeyword | "(else)|(=>)|(define)|(unquote)|(unquote-splicing)".r) ^^ {
+      name => Token.ID(TokenID.Keyword(name))
+    }
+  def expressionKeyword: Parser[String] =
+    "(quote)|(lambda)|(if)|(set!)|(begin)|(cond)|(and)|(or)|(case)|(let)|(let*)|(letrec)|(do)|(delay)|(quasiquote)".r
+
+  def variable: Parser[Token] = positioned {
+    this.not(syntacticKeyword) ~> withDelimiterAfter {
+      (initial ~ this.rep(subsequent)) ^^ { case initial ~ subsequents =>
+        Token.ID(TokenID.Var(initial + subsequents.mkString))
+      }
+        | peculiarIdentifier ^^ { name => Token.ID(TokenID.Var(name)) }
+    }
+  }
 
   def boolean: Parser[Token] = positioned {
     "#t" ^^ (_ => Token.Bool(true))
@@ -103,3 +112,4 @@ object Lexer extends JavaTokenParsers:
   def apply(code: String) = parseAll(tokens, code) match
     case Success(result, _) => result
     case failure    => scala.sys.error(failure.toString)
+}

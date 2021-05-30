@@ -18,7 +18,9 @@ object Parser extends Parsers {
   def program = phrase(expression)
 
   def expression = positioned {
-    variable ^^ { Expression.Var(_) } | literal | procedureCall | lambdaExpression
+    variable ^^ {
+      Expression.Var(_)
+    } | literal | procedureCall | lambdaExpression
   }
 
   def literal = positioned {
@@ -44,33 +46,35 @@ object Parser extends Parsers {
   }
 
   def lambdaExpression = positioned {
-    Token.LParen ~> formals ~ body ^^ { case formals ~ body =>
-      Expression.LambdaExpr(formals, body.init, body.last)
+    Token.LParen ~> lambda ~> formals ~ body <~ Token.RParen ^^ {
+      case formals ~ body =>
+        Expression.LambdaExpr(formals, body.init, body.last)
     }
   }
 
   def formals = {
     Token.LParen ~> variable.* <~ Token.RParen
       | variable ^^ (v => List(v))
-      | Token.LParen ~> variable.+ <~ Token.Dot
+      | Token.LParen ~> variable.+ <~ Token.Dot ~ variable <~ Token.RParen
   }
 
   def body = sequence
 
-  def sequence: Parser[List[Expression]] = command.* ~ expression ^^ {
-    case commands ~ expression => commands :+ expression
-  }
+  // DON'T assign sequence to `command.* ~ expression`, which would cause
+  // left recursion as here `command == expression`. In EBNF, patterns like
+  // A* A would cause left recursion.
+  def sequence: Parser[List[Expression]] = expression.+ //^^ {
+  //   case commands ~ expression => commands :+ expression
+  // }
 
-  def command: Parser[Expression] = positioned {
-    expression
-  }
+  def command = expression
 
   def variable: Parser[Identifier] =
-    accept("Variable", { case Token.ID(name) => name })
+    accept("Variable", { case Token.ID(TokenID.Var(name)) => name })
 
   def lambda: Parser[Unit] = accept(
     "The 'lambda' keyword",
-    { case Token.ID(name) if name == "lambda" => () }
+    { case Token.ID(TokenID.Keyword(name)) if name == "lambda" => () }
   )
 
   def boolean: Parser[Expression] = positioned {

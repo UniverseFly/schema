@@ -39,6 +39,8 @@ package syntax {
 package semantics {
   // the meaning of an expression under some environment
   type Computation = ExpressedValue
+  // the procedure type
+  type Procedure = List[ExpressedValue] => Computation
 
   enum ExpressedValue {
     case Symbol(symbol: scala.Predef.String)
@@ -47,7 +49,7 @@ package semantics {
     case String(s: scala.Predef.String)
     case Pair(first: ExpressedValue, second: ExpressedValue)
     case Bool(isTrue: Boolean)
-    case Procedure(f: (ExpressedValue) => Computation)
+    case Procedure(f: semantics.Procedure)
   }
 
   type Nameable = ExpressedValue

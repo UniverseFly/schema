@@ -31,12 +31,26 @@ def eval_var(`var`: Expr.Var, env: Environment): Computation = {
 }
 
 def eval_call(call: Expr.ProcedureCall, env: Environment): Computation = {
-  ExpressedValue.Bool(true)
+  val operator = eval(call.operator, env) match {
+    case ExpressedValue.Procedure(f) => f
+    case sthElse => sys.error(f"'${sthElse}' is not a procedure")
+  }
+  val operands = call.operands.map { operand => eval(operand, env) }
+  operator(operands)
 }
 
+// this is harder to understand; pls refer to DCPL chap 6.5
 def eval_lambda(lambda: Expr.LambdaExpr, env: Environment): Computation = {
-  ExpressedValue.Bool(true)
+  val Expr.LambdaExpr(ids, commands, returnValue) = lambda
+  val f: (List[ExpressedValue]) => Computation = (operands) => {
+    val bindings = (ids zip operands).toMap
+    val newEnv = env.extend(bindings)
+    commands.foreach { cmd => eval(cmd, newEnv) }
+    eval(returnValue, newEnv)
+  }
+  ExpressedValue.Procedure(f)
 }
+
 def eval_cond(cond: Expr.Conditional, env: Environment): Computation = {
   ExpressedValue.Bool(true)
 }

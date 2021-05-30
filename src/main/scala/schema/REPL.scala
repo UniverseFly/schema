@@ -6,11 +6,12 @@ import io.StdIn.readLine
 
 object REPL {
   def apply(prompt: String = "schema> ") = {
+    val env = Builtins.stdEnv
     while (true) {
       print(prompt)
       flush()
       val expr = Parser(readLine())
-      println(eval(expr, emptyEnvironment))
+      println(eval(expr, env))
     }
   }
 }
