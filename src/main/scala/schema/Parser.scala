@@ -2,6 +2,7 @@ package schema
 
 import scala.util.parsing.combinator._
 import scala.util.parsing.input.{Reader, Position, NoPosition}
+import syntax._
 
 object Parser extends Parsers {
   override type Elem = Token
@@ -64,7 +65,7 @@ object Parser extends Parsers {
     expression
   }
 
-  def variable: Parser[schema.Identifier] =
+  def variable: Parser[Identifier] =
     accept("Variable", { case Token.ID(name) => name })
 
   def lambda: Parser[Unit] = accept(
