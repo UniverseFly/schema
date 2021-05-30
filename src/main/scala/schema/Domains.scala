@@ -86,12 +86,15 @@ package semantics {
   /// A wrapper of `Environment` which is mutable, to support things like `define` in REPL
   class MutableEnvironment(private var env: Environment) {
     // still immutable methods
-    val lookup = env.lookup
+    // either use (id) => ... or `def`
+    // DON'T write `val lookup = env.lookup`, since `env` will change and this would
+    // make this `lookup` value fixed, i.e. the env would directly be evaluated
+    val lookup = (id) => env.lookup(id)
     val extend = (b: Map[syntax.Identifier, Nameable]) => MutableEnvironment(env.extend(b))
 
     // A mutable method
     def addEntry(id: syntax.Identifier, value: Nameable) = {
-      env = ID => if ID == id then Some(value) else env(id)
+      env = ID => {if ID == id then Some(value) else env(id)}
     }
   }
 

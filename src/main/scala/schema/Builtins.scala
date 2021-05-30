@@ -12,7 +12,7 @@ object Builtins {
     "/" -> div
   )
 
-  lazy val stdEnv: Environment = Environment.emptyEnvironment.extend(bindings)
+  lazy val stdEnv = MutableEnvironment.emptyEnvironment.extend(bindings)
 
   def add = makeBinaryNumOp((x, y) => x + y)
   def minus = makeBinaryNumOp((x, y) => x - y)

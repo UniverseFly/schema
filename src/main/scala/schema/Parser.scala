@@ -14,8 +14,14 @@ object Parser extends Parsers {
     override def rest = TokenReader(tokens.tail)
   }
 
+  // A simplified node for definition, which may be improved in future
+  def definition = Token.LParen ~> define ~> variable ~ expression <~ Token.RParen ^^ {
+    case variable ~ expression => Expression.Definition(variable, expression)
+  }
+  def define = accept("The 'define' keyword", { case Token.ID(TokenID.Keyword("define")) => () })
+
   // def program: Parser[SchemeProgram] = phrase(expression) ^^ { case expression => List(expression) }
-  def program = phrase(expression)
+  def program = phrase(expression | definition)
 
   def expression = positioned {
     variable ^^ {
