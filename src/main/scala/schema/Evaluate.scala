@@ -45,9 +45,13 @@ def eval_lambda(lambda: Expr.LambdaExpr, env: MutableEnvironment): Computation =
   val Expr.LambdaExpr(ids, commands, returnValue) = lambda
   val f: (List[ExpressedValue]) => Computation = (operands) => {
     val bindings = (ids zip operands).toMap
-    // this `env` would be modified if later a `define` is evaluated
-    // this's why recursion can be handled
-    // this behavior I think is just a trick, which needs to be further improved
+    // This `env` would be modified if later a `define` is evaluated,
+    // and that's why recursion can be handled
+    //
+    // Actually, this behavior is just a trick that my implementation of scheme is
+    // dynamically scoped, so when a free variable occurs in a lambda definition it
+    // will not use the `environment` determined at the time of definition.
+    // See this pic: https://tva1.sinaimg.cn/large/008i3skNgy1gr1l97iecdj30vq0u0gwi.jpg
     val newEnv = env.extend(bindings)
     commands.foreach { cmd => eval(cmd, newEnv) }
     eval(returnValue, newEnv)
