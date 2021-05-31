@@ -1,8 +1,8 @@
-# Schema: *Schem*e interpreter in Scal*a*3
+# *Schema*: *Schem*e interpreter in Scal*a*3
 
 Currently, schema can evaluate trivial recursive programs as shown below:
 
-```shell
+```
 schema> (define fact (lambda (n) (if (= n 0) 1 (* n (fact (- n 1))))))
 null
 schema> (fact 10)
