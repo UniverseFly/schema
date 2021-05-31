@@ -26,7 +26,7 @@ object Parser extends Parsers {
   def expression = positioned {
     variable ^^ {
       Expression.Var(_)
-    } | literal | procedureCall | lambdaExpression
+    } | literal | procedureCall | lambdaExpression | conditional
   }
 
   def literal = positioned {
@@ -74,6 +74,14 @@ object Parser extends Parsers {
   // }
 
   def command = expression
+
+  def conditional = Token.LParen ~> `if` ~> test ~ consequent ~ alternate <~ Token.RParen ^^ {
+    case test ~ consequent ~ alternate => Expression.Conditional(test, consequent, alternate)
+  }
+  def test: Parser[Expression] = expression
+  def consequent: Parser[Expression] = expression
+  def alternate: Parser[Expression] = expression
+  def `if` = accept("'if' keyword", { case Token.ID(TokenID.Keyword("if")) => () })
 
   def variable: Parser[Identifier] =
     accept("Variable", { case Token.ID(TokenID.Var(name)) => name })

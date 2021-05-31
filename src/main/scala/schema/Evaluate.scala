@@ -53,12 +53,19 @@ def eval_lambda(lambda: Expr.LambdaExpr, env: MutableEnvironment): Computation =
 }
 
 def eval_cond(cond: Expr.Conditional, env: MutableEnvironment): Computation = {
-  ExpressedValue.Bool(true)
+  val Expr.Conditional(test, consequent, alt) = cond
+  val isTrue = eval(test, env) match {
+    case ExpressedValue.Bool(v) => v
+    case sthElse => sys.error(f"$sthElse is not a boolean")
+  }
+  if isTrue then eval(consequent, env) else eval(alt, env)
 }
+
 def eval_condNoAlt(
     condNoAlt: Expr.Conditional_NoAlt,
     env: MutableEnvironment
 ): Computation = { ExpressedValue.Bool(true) }
+
 def eval_assign(assign: Expr.Assignment, env: MutableEnvironment): Computation = {
   ExpressedValue.Bool(true)
 }

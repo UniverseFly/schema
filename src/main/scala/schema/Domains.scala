@@ -1,8 +1,6 @@
 package schema
 
 import scala.util.parsing.input.Positional
-import schema.semantics.ExpressedValue
-import schema.semantics.MutableEnvironment
 
 /// Syntactic Domain
 package syntax {
@@ -84,7 +82,7 @@ package semantics {
   }
 
   /// A wrapper of `Environment` which is mutable, to support things like `define` in REPL
-  class MutableEnvironment(private var env: Environment) {
+  class MutableEnvironment(var env: Environment) {
     // still immutable methods
     // either use (id) => ... or `def`
     // DON'T write `val lookup = env.lookup`, since `env` will change and this would
@@ -94,7 +92,9 @@ package semantics {
 
     // A mutable method
     def addEntry(id: syntax.Identifier, value: Nameable) = {
-      env = ID => {if ID == id then Some(value) else env(id)}
+      val oldEnv = env
+      // make sure to use oldEnv, or infinite recursion would happen
+      this.env = ID => if ID == id then Some(value) else oldEnv(ID)
     }
   }
 
