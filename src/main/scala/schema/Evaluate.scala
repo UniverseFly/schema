@@ -45,6 +45,9 @@ def eval_lambda(lambda: Expr.LambdaExpr, env: MutableEnvironment): Computation =
   val Expr.LambdaExpr(ids, commands, returnValue) = lambda
   val f: (List[ExpressedValue]) => Computation = (operands) => {
     val bindings = (ids zip operands).toMap
+    // this `env` would be modified if later a `define` is evaluated
+    // this's why recursion can be handled
+    // this behavior I think is just a trick, which needs to be further improved
     val newEnv = env.extend(bindings)
     commands.foreach { cmd => eval(cmd, newEnv) }
     eval(returnValue, newEnv)
