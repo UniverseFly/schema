@@ -50,6 +50,18 @@ class EvalTest extends AnyFunSuite {
     assertResult(semantics.ExpressedValue.Num(fact(10)))(result)
   }
 
+  test("Convenient lambda definition") {
+    val env = Builtins.stdEnv
+    val define =
+      Parser("(define (fact x) (if (= x 0) 1 (* x (fact (- x 1)))))")
+    val callFact = Parser("(fact 10)")
+    eval(define, env)
+    val result = eval(callFact, env)
+
+    lazy val fact: (Int) => Int = x => if x == 0 then 1 else x * fact(x - 1)
+    assertResult(semantics.ExpressedValue.Num(fact(10)))(result)
+  }
+
   test("Empty list quotation as nil") {
     val env = Builtins.stdEnv
     val nil = Parser("'()")
