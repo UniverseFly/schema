@@ -123,4 +123,55 @@ package semantics {
   object MutableEnvironment {
     val emptyEnvironment = MutableEnvironment(id => None)
   }
+
+  // Helper domain functions
+
+  def makeList(args: List[ExpressedValue]): ExpressedValue = args match {
+    case Nil     => ExpressedValue.Nil
+    case x :: xs => ExpressedValue.Pair(x, makeList(xs))
+  }
+
+  def concatTwoLists(
+      lhs: ExpressedValue.Pair,
+      rhs: ExpressedValue.Pair
+  ): ExpressedValue.Pair = lhs match {
+    case ExpressedValue.Pair(first, ExpressedValue.Nil) =>
+      ExpressedValue.Pair(first, rhs)
+    case ExpressedValue.Pair(first, rest @ ExpressedValue.Pair(_, _)) =>
+      ExpressedValue.Pair(first, concatTwoLists(rest, rhs))
+    case _ => sys.error("ERROR: TODO")
+  }
+
+  def concatTwoLists(lhs: ExpressedValue, rhs: ExpressedValue): ExpressedValue =
+    (lhs, rhs) match {
+      case (ExpressedValue.Nil, rhs: ExpressedValue.Pair) => rhs
+      case (lhs: ExpressedValue.Pair, ExpressedValue.Nil) => lhs
+      case (ExpressedValue.Nil, ExpressedValue.Nil) => ExpressedValue.Nil
+      case (lhs: ExpressedValue.Pair, rhs: ExpressedValue.Pair) =>
+        concatTwoLists(lhs, rhs)
+      case _ => sys.error("ERROR: TODO")
+    }
+
+  def concatLists(args: List[ExpressedValue]): ExpressedValue = args match {
+    case Nil     => ExpressedValue.Nil
+    case x::xs   => concatTwoLists(x, concatLists(xs))
+  }
+
+  def length(list: ExpressedValue): ExpressedValue = list match {
+    case ExpressedValue.Nil => ExpressedValue.Num(0)
+    case ExpressedValue.Pair(lhs, rest) => length(rest) match {
+      case ExpressedValue.Num(n) => ExpressedValue.Num(n + 1)
+      case  _ => sys.error("ERROR: TODO")
+    }
+    case _ => sys.error("ERROR: TODO")
+  }
+
+  def map(proc: Procedure, list: ExpressedValue): ExpressedValue = list match {
+    case ExpressedValue.Nil => ExpressedValue.Nil
+    case ExpressedValue.Pair(lhs, ExpressedValue.Nil) => 
+      ExpressedValue.Pair(proc(List(lhs)), ExpressedValue.Nil)
+    case ExpressedValue.Pair(lhs, rest @ ExpressedValue.Pair(_, _)) =>
+      ExpressedValue.Pair(proc(List(lhs)), map(proc, rest))
+    case _ => sys.error("ERROR: TODO")
+  }
 }

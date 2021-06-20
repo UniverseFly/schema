@@ -1,6 +1,12 @@
 package schema
 
-import semantics._
+import semantics.{
+  ExpressedValue,
+  MutableEnvironment,
+  Computation,
+  Nameable,
+  Procedure
+}
 
 /// Built-in procedures
 object Builtins {
@@ -15,6 +21,13 @@ object Builtins {
     ">" -> gt,
     ">=" -> ge,
     "=" -> eq,
+    "car" -> car,
+    "cdr" -> cdr,
+    "list" -> list,
+    "cons" -> cons,
+    "append" -> append,
+    "length" -> length,
+    "map" -> map,
   )
 
   def stdEnv = MutableEnvironment.emptyEnvironment.extend(bindings)
@@ -29,6 +42,43 @@ object Builtins {
   def ge = makeBinaryNumOp(ExpressedValue.Bool.apply, (x, y) => x >= y)
   def eq = makeBinaryNumOp(ExpressedValue.Bool.apply, (x, y) => x == y)
 
+  def append = ExpressedValue.Procedure(args => semantics.concatLists(args))
+
+  def car = ExpressedValue.Procedure(args =>
+    args match {
+      case List(ExpressedValue.Pair(fst @ _, _)) => fst
+      case _                                     => sys.error("ERROR: TODO")
+    }
+  )
+
+  def cdr = ExpressedValue.Procedure(args =>
+    args match {
+      case List(ExpressedValue.Pair(_, scd @ _)) => scd
+      case _                                     => sys.error("ERROR: TODO")
+    }
+  )
+
+  def cons = ExpressedValue.Procedure(args =>
+    args match {
+      case List(fst, scd) => ExpressedValue.Pair(fst, scd)
+      case _              => sys.error("ERROR: TODO")
+    }
+  )
+
+  def length = ExpressedValue.Procedure(args =>
+    args match {
+      case List(ev) => semantics.length(ev)
+      case _        => sys.error("ERROR: TODO")
+    }
+  )
+
+  def list = ExpressedValue.Procedure(args => semantics.makeList(args))
+
+  def map = ExpressedValue.Procedure(args => args match {
+    case List(ExpressedValue.Procedure(proc), (list: ExpressedValue)) => 
+      semantics.map(proc, list)
+    case _ => sys.error("ERROR: TODO")
+  })
 
   def makeBinaryNumOp[T](
       constructor: T => Computation,
@@ -39,7 +89,7 @@ object Builtins {
       args match {
         case Num(a) :: Num(b) :: rest if rest.isEmpty =>
           constructor(op(a, b))
-        case sthElse => sys.error("TODO")
+        case sthElse => sys.error("ERROR: TODO")
       }
     ExpressedValue.Procedure(f)
   }

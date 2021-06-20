@@ -66,7 +66,7 @@ object Lexer extends JavaTokenParsers {
       name => Token.ID(TokenID.Keyword(name))
     }
   def expressionKeyword: Parser[String] =
-    "(quote)|(lambda)|(if)|(set!)|(begin)|(cond)|(and)|(or)|(case)|(let)|(let*)|(letrec)|(do)|(delay)|(quasiquote)".r
+    "(quote)|(lambda)|(if)|(set!)|(begin)|(cond)|(and)|(or)|(case)|(let)|(let\\*)|(letrec)|(do)|(delay)|(quasiquote)".r
 
   def variable: Parser[Token] = positioned {
     this.not(syntacticKeyword) ~> withDelimiterAfter {
