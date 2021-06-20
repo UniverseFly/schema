@@ -1,6 +1,7 @@
 package schema
 
 import scala.util.parsing.input.Positional
+import _root_.schema.syntax.Datum
 
 /// Syntactic Domain
 package syntax {
@@ -9,14 +10,32 @@ package syntax {
     case Num(value: BigDecimal)
     case Char(value: scala.Char)
     case String(value: scala.Predef.String)
+    case Nil
   }
 
   type Identifier = String
 
+  // syntactic representation of scheme
+  enum Datum {
+    // simple
+    case Bool(v: Boolean)
+    case Num(v: BigDecimal)
+    case Char(v: scala.Char)
+    case String(v: scala.Predef.String)
+    case Symbol(v: Identifier)
+    // compound
+    case Compound(datums: List[Datum])
+  }
+
+  // An expression is an either an atomic or a combination (including procedure call
+  // and special forms)
   enum Expression extends Positional {
+    // atomic/primitives
     case Const(value: Constant)
     case Var(id: Identifier)
+    // combination: procedure call
     case ProcedureCall(operator: Expression, operands: List[Expression])
+    // special forms
     case LambdaExpr(
         formals: List[Identifier],
         commands: List[Command],
@@ -29,8 +48,8 @@ package syntax {
     )
     case Conditional_NoAlt(test: Expression, consequent: Expression)
     case Assignment(id: Identifier, value: Expression)
-    // A simplified definition AST
     case Definition(id: Identifier, value: Expression)
+    case Quote(datum: Datum)
   }
 
   type Command = Expression
@@ -48,16 +67,18 @@ package semantics {
     case Char(c: Character)
     case Num(num: BigDecimal)
     case String(s: scala.Predef.String)
-    case Pair(first: ExpressedValue, second: ExpressedValue)
     case Bool(isTrue: Boolean)
     case Procedure(f: semantics.Procedure)
+    // pair and list
+    case Pair(first: ExpressedValue, second: ExpressedValue)
+    case Nil
   }
 
   type Nameable = ExpressedValue
 
   // This kind of functional definition is inspired from DCPL: Design concepts in
   // Programming Languages, page 277
-  // 
+  //
   // We can also define Env as a class, which stores mappings of (ID, Value)
   //
   // But in this project `Environment` would not be used directly; instead a mutable version
@@ -76,7 +97,7 @@ package semantics {
     def extend(bindings: Map[syntax.Identifier, Nameable]): Environment = {
       bindings match {
         case b if b.isEmpty => env
-        case b => id => if b.contains(id) then Some(b(id)) else env(id)
+        case b              => id => if b.contains(id) then Some(b(id)) else env(id)
       }
     }
   }
@@ -88,7 +109,8 @@ package semantics {
     // DON'T write `val lookup = env.lookup`, since `env` will change and this would
     // make this `lookup` value fixed, i.e. the env would directly be evaluated
     val lookup = (id) => env.lookup(id)
-    val extend = (b: Map[syntax.Identifier, Nameable]) => MutableEnvironment(env.extend(b))
+    val extend = (b: Map[syntax.Identifier, Nameable]) =>
+      MutableEnvironment(env.extend(b))
 
     // A mutable method
     def addEntry(id: syntax.Identifier, value: Nameable) = {

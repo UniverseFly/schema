@@ -5,8 +5,6 @@ import syntax._
 
 class ParserTest extends AnyFunSuite {
   test("Parser should parse lambda") {
-    Parser("(1 2 3 4 5)")
-    assertThrows[AnyRef](Parser("()"))
     assert(Parser("(lambda (x) x)").isInstanceOf[Expression.LambdaExpr])
   }
 
@@ -16,6 +14,10 @@ class ParserTest extends AnyFunSuite {
 
   test("Parser should parse conditional") {
     assert(Parser("(if #t 1 2)").isInstanceOf[Expression.Conditional])
+  }
+
+  test("Parse quotation") {
+    assert(Parser("(quote (1 2 3 4 5))").isInstanceOf[Expression.Quote])
   }
 }
 

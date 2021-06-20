@@ -62,7 +62,7 @@ object Lexer extends JavaTokenParsers {
   def peculiarIdentifier: Parser[String] = """[+-]|(\.\.\.)""".r
 
   def syntacticKeyword: Parser[Token] =
-    (expressionKeyword | "(else)|(=>)|(define)|(unquote)|(unquote-splicing)".r) ^^ {
+    (expressionKeyword | "(else)|(=>)|(define)|(unquote)|(unquote-splicing)".r | "nil") ^^ {
       name => Token.ID(TokenID.Keyword(name))
     }
   def expressionKeyword: Parser[String] =
