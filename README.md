@@ -57,6 +57,8 @@ Welcome to schema REPL, created by Yuxiang in 2021!
 schema> 
 ```
 
+You may download `schema-assembly-0.1.0.jar` [here](https://github.com/UniverseFly/schema/releases/download/0.1.0/schema-assembly-0.1.0.jar).
+
 ## Acknowledgements
 
 CS61A:
