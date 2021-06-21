@@ -13,7 +13,7 @@ Use `sbt` to compile/run/test this project.
 
 Schema currently supports recursion, mutual recursion, list manipulation, first-class & higher-order functions, etc.
 
-```
+```sbt
 sbt:schema> run
 [info] running schema.schema 
 Welcome to schema REPL, created by Yuxiang in 2021!
