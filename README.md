@@ -3,7 +3,7 @@
 
 ## Motivation
 
-This project is inspired by [the scheme project](https://inst.eecs.berkeley.edu/~cs61a/sp21/proj/scheme/) of CS 61A, Berkely. The reason why I use scala for implementation is that I'm impressed by its power of abstraction. Coincidentally, just before I started this project, Scala 3 was released, coming with many powerful features that give more freedom to developers.
+This project is inspired by [the scheme project](https://inst.eecs.berkeley.edu/~cs61a/sp21/proj/scheme/) of CS 61A, Berkeley. The reason why I use scala for implementation is that I'm impressed by its power of abstraction. Coincidentally, just before I started this project, Scala 3 was released, coming with many powerful features that give more freedom to developers.
 
 ## Usage
 
